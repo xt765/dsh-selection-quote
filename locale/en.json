@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "title": "Selection Quote & Comment",
+    "description": "Select text in conversation messages to Add to Chat (⌘L) or Add Comment (⇧⌘L), with a Quotes & Comments Dock right above the composer input box."
+  },
+  "config": {
+    "enabled": {
+      "title": "Enable Selection Quote & Comment",
+      "description": "Whether to enable the floating selection toolbar and the Quotes & Comments Dock."
+    },
+    "addToChatMode": {
+      "title": "Default Add to Chat (⌘L) Behavior",
+      "description": "Whether Add to Chat (⌘L) inserts the blockquote directly into the composer draft (direct) or appends it to the Quotes & Comments Dock (dock)."
+    },
+    "commentLabel": {
+      "title": "Comment Prefix Label",
+      "description": "Label prefix used when formatting comments into Markdown (default: '批注')."
+    }
+  }
+}
