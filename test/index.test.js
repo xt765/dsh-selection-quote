@@ -91,7 +91,7 @@ test("insertTextIntoShellDraft appends or inserts cleanly into SessionInputShell
   );
 });
 
-test("client bundle registers conversation.input.overlay and conversation.composer.dock slots and manages dock state", async () => {
+test("client bundle registers conversation.input.overlay and conversation.input.dock slots and manages dock state", async () => {
   let loadedModuleDef = null;
   globalThis.window = {
     innerWidth: 1280,
@@ -133,8 +133,9 @@ test("client bundle registers conversation.input.overlay and conversation.compos
   });
 
   assert.equal(clientMod.name, "selection-quote");
-  assert.deepEqual(clientMod.inject, ["slots", "locale", "sessions", "conversation"]);
+  assert.deepEqual(clientMod.inject, ["slots", "locale", "sessions", "conversation", "uiConversation"]);
 
+  let registeredUserTextRule = null;
   const registeredSlots = [];
   const mockCtx = {
     slots: {
@@ -152,12 +153,35 @@ test("client bundle registers conversation.input.overlay and conversation.compos
         },
       },
     },
+    uiConversation: {
+      userText: {
+        register(rule) {
+          registeredUserTextRule = rule;
+          return () => {};
+        },
+      },
+    },
   };
 
   clientMod.apply(mockCtx);
-  assert.equal(registeredSlots.length, 2);
+  assert.equal(registeredSlots.length, 3);
   const slotNames = registeredSlots.map((s) => s.spec.name).sort();
-  assert.deepEqual(slotNames, ["conversation.composer.dock", "conversation.input.overlay"]);
+  assert.deepEqual(slotNames, [
+    "conversation.input.dock",
+    "conversation.input.overlay",
+    "conversation.user.text.node",
+  ]);
+  assert.ok(registeredUserTextRule, "should register selection-quote userText rule");
+  const matched = registeredUserTextRule.match(
+    "只有注释为什么没办法发送消息 不应该是这样\n\n> 在对话消息中鼠标划选任意文字后\n**批注**：测试 1\n\n> 确认按钮\n**批注**：测试 2",
+    0
+  );
+  assert.ok(matched);
+  assert.equal(matched.id, "selection-quote");
+  assert.equal(matched.data.items.length, 2);
+  assert.equal(matched.data.items[0].quote, "在对话消息中鼠标划选任意文字后");
+  assert.equal(matched.data.items[0].comment, "测试 1");
+  assert.equal(matched.data.userMessage, "只有注释为什么没办法发送消息 不应该是这样");
 
   // Verify store lifecycle: showPill -> openCommentMode -> addItem -> edit -> batch format
   const store = clientMod.getSessionStore("session-test-1");
@@ -331,7 +355,7 @@ test("QuotesCommentsDock returns null when empty and batch-inserts structured ma
   };
 
   clientMod.apply(mockCtx);
-  const DockComponent = registered["conversation.composer.dock"];
+  const DockComponent = registered["conversation.input.dock"];
   assert.ok(DockComponent);
 
   // Empty queue -> returns null (zero height)
@@ -366,4 +390,28 @@ test("QuotesCommentsDock returns null when empty and batch-inserts structured ma
     ].join("\n")
   );
   assert.equal(store.getSnapshot().items.length, 0);
+
+  // Verify compatibility with @deepseek-ai/dsh-client-store's { getSnapshot, subscribe, set } contract
+  const dshNativeStore = clientMod.createSelectionQuoteStore((initial) => {
+    let cur = initial;
+    const subs = new Set();
+    return {
+      getSnapshot: () => cur,
+      subscribe: (fn) => {
+        subs.add(fn);
+        return () => subs.delete(fn);
+      },
+      set: (next) => {
+        cur = next;
+        for (const fn of subs) fn();
+      },
+    };
+  });
+  dshNativeStore.showPill(
+    "选中文字测试",
+    { top: 200, left: 300, bottom: 224, right: 420, width: 120, height: 24 },
+    { width: 1280, height: 800 }
+  );
+  assert.equal(dshNativeStore.getSnapshot().toolbar.visible, true);
+  assert.equal(dshNativeStore.getSnapshot().toolbar.text, "选中文字测试");
 });

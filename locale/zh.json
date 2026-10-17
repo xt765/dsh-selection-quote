@@ -1,20 +1,20 @@
 {
   "meta": {
     "title": "划词引用与批注 (Selection Quote & Comment)",
-    "description": "支持在会话消息流中鼠标划词一键添加到对话（Add to Chat ⌘L）、针对选中文本写注释/批注（Add Comment ⇧⌘L），并在输入框上方提供引用与批注汇总卡片栏。"
+    "description": "支持在会话消息流中划词右键触发「拷贝 / 添加到对话 (⌘L)」，保持选中文字持续高亮并锚定蓝色水滴序号角标（1、2…），通过圆角胶囊输入框填写评论，并在底部输入框与已发送消息中渲染「💬 N 条注释」胶囊及悬浮详情卡片。"
   },
   "config": {
     "enabled": {
       "title": "启用划词引用与批注",
-      "description": "是否启用会话消息流中的划词悬浮胶囊条与引用批注卡片栏。"
+      "description": "是否启用会话消息流中的划词右键菜单、蓝色水滴角标胶囊评论框以及「N 条注释」胶囊。"
     },
     "addToChatMode": {
-      "title": "Add to Chat (⌘L) 默认行为",
-      "description": "选择点击 Add to Chat (⌘L) 时直接插入底部输入框草稿（direct）还是加入输入框上方的待发送引用与批注栏（dock）。"
+      "title": "添加到对话 (⌘L) 默认行为",
+      "description": "选择触发添加到对话时的默认模式（dock 暂存为注释胶囊，或 direct 直接插入草稿）。"
     },
     "commentLabel": {
       "title": "批注前缀标签",
-      "description": "汇总插入输入框时使用的批注前缀文案（默认：“批注”，渲染为 **批注**：...）。"
+      "description": "发送消息时使用的批注前缀文案（默认：“批注”，序列化为 **批注**：...）。"
     }
   }
 }

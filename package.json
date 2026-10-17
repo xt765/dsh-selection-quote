@@ -1,7 +1,7 @@
 {
   "name": "dsh-selection-quote",
-  "version": "0.1.0",
-  "description": "Cursor + GitHub PR Review style selection quote & comment plugin for DeepSeek Harness (鼠标划词添加到对话 Add to Chat ⌘L + 针对选中文字写注释/批注 Add Comment ⇧⌘L + 输入框上方引用与批注卡片栏)",
+  "version": "0.2.0",
+  "description": "Codex + Cursor style selection quote & inline comment plugin for DeepSeek Harness (划词右键菜单「拷贝 / 添加到对话 ⌘L」+ 持续选中高亮 + 蓝色水滴序号角标与圆角胶囊评论框 + 输入框与已发送消息「💬 N 条注释」胶囊及悬浮详情卡片)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xt765/dsh-selection-quote.git"
