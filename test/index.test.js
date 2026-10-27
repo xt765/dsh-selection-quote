@@ -133,7 +133,7 @@ test("client bundle registers conversation.input.overlay and conversation.input.
   });
 
   assert.equal(clientMod.name, "selection-quote");
-  assert.deepEqual(clientMod.inject, ["slots", "locale", "sessions", "conversation", "uiConversation"]);
+  assert.deepEqual(clientMod.inject, ["slots", "locale", "sessions", "conversation"]);
 
   let registeredUserTextRule = null;
   const registeredSlots = [];
@@ -414,4 +414,73 @@ test("QuotesCommentsDock returns null when empty and batch-inserts structured ma
   );
   assert.equal(dshNativeStore.getSnapshot().toolbar.visible, true);
   assert.equal(dshNativeStore.getSnapshot().toolbar.text, "选中文字测试");
+});
+
+test("client bundle gracefully handles missing uiConversation service and deduplicates input dock", async () => {
+  await import("../lib/client.js");
+  const clientMod = globalThis.__DSH_SELECTION_QUOTE_BUILD__((pkg) => {
+    if (pkg === "react") {
+      return {
+        useMemo: (fn) => fn(),
+        useRef: (v) => ({ current: v }),
+        useEffect: () => {},
+        useCallback: (fn) => fn,
+        useSyncExternalStore: (_sub, getSnap) => getSnap(),
+      };
+    }
+    if (pkg === "react-dom") {
+      return { createPortal: (node) => node };
+    }
+    if (pkg === "react/jsx-runtime") {
+      return {
+        Fragment: "Fragment",
+        jsx: (type, props) => ({ type, props }),
+        jsxs: (type, props) => ({ type, props }),
+      };
+    }
+    return {};
+  });
+
+  // Verify that apply() does not throw even if ctx.get throws or uiConversation is absent
+  const registeredSlots = [];
+  const mockCtxStrict = {
+    slots: {
+      inject(_name, fn) {
+        fn();
+      },
+      register(spec, component) {
+        registeredSlots.push({ spec, component });
+      },
+    },
+    conversation: { input: { shell: () => null } },
+    get(serviceName, _required) {
+      if (serviceName === "uiConversation") return undefined;
+      return null;
+    },
+  };
+
+  assert.doesNotThrow(() => {
+    clientMod.apply(mockCtxStrict);
+  }, "apply() should never throw on strict Cordis proxy when uiConversation is not available");
+
+  // Verify that QuotesCommentsDock returns null when inlineOnly is true and composer card exists
+  const dockEntry = registeredSlots.find((s) => s.spec.name === "conversation.input.dock");
+  assert.ok(dockEntry, "conversation.input.dock should be registered");
+
+  globalThis.document = {
+    querySelector(selector) {
+      if (selector === "[data-composer-card]") return {};
+      return null;
+    },
+    getElementById: () => null,
+    createElement: () => ({ id: "", textContent: "" }),
+    head: { appendChild: () => {} },
+  };
+
+  const store = clientMod.getSessionStore("session-test-dedup");
+  store.addItem({ quote: "测试引用", comment: "测试批注" });
+
+  const dockComponent = dockEntry.component;
+  const renderedDock = dockComponent({ sessionId: "session-test-dedup", inlineOnly: true });
+  assert.equal(renderedDock, null, "QuotesCommentsDock should return null when inlineOnly is true and composer card exists");
 });
