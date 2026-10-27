@@ -483,4 +483,40 @@ test("client bundle gracefully handles missing uiConversation service and dedupl
   const dockComponent = dockEntry.component;
   const renderedDock = dockComponent({ sessionId: "session-test-dedup", inlineOnly: true });
   assert.equal(renderedDock, null, "QuotesCommentsDock should return null when inlineOnly is true and composer card exists");
+
+  // Verify deferred ctx.inject(["uiConversation"], ...) registers userText rule when uiConversation arrives later
+  let deferredRule = null;
+  let injectedDeps = null;
+  const mockDeferredCtx = {
+    slots: {
+      inject(_name, fn) {
+        fn();
+      },
+      register() {},
+    },
+    conversation: { input: { shell: () => null } },
+    get() {
+      return undefined;
+    },
+    inject(deps, cb) {
+      injectedDeps = deps;
+      cb({
+        uiConversation: {
+          userText: {
+            register(rule) {
+              deferredRule = rule;
+              return () => {};
+            },
+          },
+        },
+        effect(fn) {
+          fn();
+        },
+      });
+    },
+  };
+  clientMod.apply(mockDeferredCtx);
+  assert.deepEqual(injectedDeps, ["uiConversation"]);
+  assert.ok(deferredRule, "userText rule should be registered via deferred ctx.inject(['uiConversation'])");
+  assert.equal(deferredRule.id, "selection-quote");
 });
